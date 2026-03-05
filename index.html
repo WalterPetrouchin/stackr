@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stackr</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e5e9;
+  position: relative;
+  z-index: 100;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 8px;
+}
+
+.workspace-switcher {
+  position: relative;
+}
+
+.workspace-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f0f2f5;
+  border: 1px solid #e2e5e9;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #1a1a1a;
+  transition: background 150ms ease;
+}
+
+.workspace-btn:hover { background: #e6e8ec; }
+
+.workspace-btn .arrow {
+  font-size: 10px;
+  color: #666;
+}
+
+.workspace-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 1px solid #e2e5e9;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  min-width: 220px;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.workspace-dropdown.open { display: block; }
+
+.ws-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 150ms ease;
+}
+
+.ws-item:hover { background: #f5f6f8; }
+
+.ws-item.active { background: #eef3fb; color: #4A90D9; font-weight: 500; }
+
+.ws-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ws-item-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.ws-item:hover .ws-item-actions { opacity: 1; }
+
+.ws-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 11px;
+  color: #888;
+  border-radius: 3px;
+}
+
+.ws-action-btn:hover { background: #e2e5e9; color: #333; }
+
+.ws-action-btn.delete:hover { background: #fde8e8; color: #dc3545; }
+
+.ws-divider { height: 1px; background: #e2e5e9; margin: 4px 0; }
+
+.ws-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #4A90D9;
+  transition: background 150ms ease;
+}
+
+.ws-add:hover { background: #f5f6f8; }
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.header-btn {
+  padding: 6px 12px;
+  background: #f0f2f5;
+  border: 1px solid #e2e5e9;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #555;
+  transition: background 150ms ease;
+}
+
+.header-btn:hover { background: #e6e8ec; }
+
+/* ===== BANNER ===== */
+.banner {
+  padding: 10px 24px;
+  background: #fff3cd;
+  border-bottom: 1px solid #ffc107;
+  font-size: 13px;
+  color: #856404;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.banner.error {
+  background: #f8d7da;
+  border-bottom-color: #f5c6cb;
+  color: #721c24;
+}
+
+.banner-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: inherit;
+  padding: 0 4px;
+}
+
+/* ===== BOARD ===== */
+.board {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+  overflow-x: auto;
+  align-items: flex-start;
+  min-height: calc(100vh - 57px);
+}
+
+/* ===== COLUMN ===== */
+.column {
+  flex: 1 1 0;
+  min-width: 180px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e5e9;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 105px);
+  transition: box-shadow 150ms ease;
+  position: relative;
+}
+
+.column.dragging { opacity: 0.5; }
+
+.column.drag-over-column {
+  box-shadow: -3px 0 0 #4A90D9;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 12px 8px;
+  gap: 8px;
+  cursor: grab;
+  position: relative;
+}
+
+.column-header:active { cursor: grabbing; }
+
+.column-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #555;
+  flex: 1;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.column-title:focus {
+  background: #f0f2f5;
+  white-space: normal;
+}
+
+.column-title[contenteditable="true"] {
+  cursor: text;
+}
+
+.card-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
+  background: #f0f2f5;
+  padding: 1px 6px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.column-menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 14px;
+  color: #999;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 150ms ease, background 150ms ease;
+  flex-shrink: 0;
+}
+
+.column-header:hover .column-menu-btn { opacity: 1; }
+.column-menu-btn:hover { background: #f0f2f5; color: #555; }
+
+.column-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e5e9;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  min-width: 140px;
+  z-index: 150;
+  overflow: hidden;
+}
+
+.column-menu.open { display: block; }
+
+.column-menu-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.column-menu-item:hover { background: #f5f6f8; }
+.column-menu-item.delete { color: #dc3545; }
+.column-menu-item.delete:hover { background: #fde8e8; }
+
+/* ===== CARD LIST ===== */
+.card-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.card-list.empty-drop-zone {
+  border: 2px dashed #ddd;
+  border-radius: 6px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+
+.empty-text {
+  font-size: 12px;
+  color: #bbb;
+  text-align: center;
+  padding: 16px 8px;
+}
+
+/* ===== CARD ===== */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e5e9;
+  border-radius: 6px;
+  padding: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: box-shadow 150ms ease, opacity 150ms ease;
+}
+
+.card:hover {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.card.dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.card-desc {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #ccc;
+  padding: 2px 5px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 150ms ease, color 150ms ease;
+  line-height: 1;
+}
+
+.card:hover .card-delete-btn { opacity: 1; }
+.card-delete-btn:hover { color: #dc3545; background: #fde8e8; }
+
+/* ===== INSERTION INDICATOR ===== */
+.insertion-indicator {
+  height: 2px;
+  background: #4A90D9;
+  border-radius: 1px;
+  margin: -1px 0;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* ===== ADD CARD ===== */
+.add-card-btn {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  border-top: 1px solid #f0f2f5;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.add-card-btn:hover { color: #4A90D9; background: #f9fafb; }
+
+.add-card-form {
+  padding: 8px 12px 12px;
+}
+
+.add-card-form input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e2e5e9;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.add-card-form input:focus { border-color: #4A90D9; }
+
+.add-card-form input + input { margin-top: 6px; }
+
+.add-card-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-add {
+  padding: 6px 14px;
+  background: #4A90D9;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.btn-add:hover { background: #3a7bc8; }
+
+.btn-cancel {
+  padding: 6px 14px;
+  background: #f0f2f5;
+  color: #555;
+  border: 1px solid #e2e5e9;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.btn-cancel:hover { background: #e6e8ec; }
+
+/* ===== ADD COLUMN ===== */
+.add-column-btn {
+  position: fixed;
+  top: 65px;
+  right: 24px;
+  z-index: 50;
+  background: #fff;
+  border: 1px solid #e2e5e9;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.add-column-btn:hover {
+  background: #f5f8ff;
+  border-color: #4A90D9;
+  color: #4A90D9;
+}
+
+/* ===== EMPTY BOARD STATE ===== */
+.empty-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  color: #888;
+  gap: 16px;
+}
+
+.empty-board p { font-size: 14px; }
+
+.empty-board button {
+  padding: 10px 20px;
+  background: #4A90D9;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.empty-board button:hover { background: #3a7bc8; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 10px;
+  width: 440px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  padding: 24px;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  width: calc(100% + 12px);
+  word-break: break-word;
+}
+
+.modal-title:focus {
+  border-color: #e2e5e9;
+  background: #f9fafb;
+}
+
+.modal-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #888;
+  margin-top: 16px;
+  margin-bottom: 6px;
+}
+
+.modal-desc {
+  font-size: 14px;
+  outline: none;
+  border: 1px solid #e2e5e9;
+  border-radius: 6px;
+  padding: 8px 10px;
+  min-height: 60px;
+  width: 100%;
+  word-break: break-word;
+}
+
+.modal-desc:focus {
+  border-color: #4A90D9;
+}
+
+.modal-desc:empty::before {
+  content: 'Add a description...';
+  color: #bbb;
+}
+
+.modal-desc[data-field="notes"]:empty::before {
+  content: 'Add notes or title options...';
+  color: #bbb;
+}
+
+.color-picker {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.color-swatch:hover { transform: scale(1.1); }
+
+.color-swatch.selected { border-color: #1a1a1a; }
+
+.color-swatch.no-color {
+  background: #f0f2f5;
+  position: relative;
+}
+
+.color-swatch.no-color::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  right: 3px;
+  height: 2px;
+  background: #ccc;
+  transform: rotate(-45deg);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f2f5;
+}
+
+.btn-delete-card {
+  padding: 6px 14px;
+  background: #fff;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.btn-delete-card:hover { background: #dc3545; color: #fff; }
+
+.btn-delete-confirm {
+  padding: 6px 14px;
+  background: #dc3545;
+  color: #fff;
+  border: 1px solid #dc3545;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-close-modal {
+  padding: 6px 14px;
+  background: #f0f2f5;
+  color: #555;
+  border: 1px solid #e2e5e9;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-close-modal:hover { background: #e6e8ec; }
+
+/* ===== SCROLLBAR ===== */
+.card-list::-webkit-scrollbar { width: 4px; }
+.card-list::-webkit-scrollbar-track { background: transparent; }
+.card-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+/* ===== LOADING OVERLAY ===== */
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 300ms ease;
+}
+#loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.loading-label {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  letter-spacing: -0.3px;
+}
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #e2e5e9;
+  border-top-color: #4A90D9;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== COLUMN RESIZE HANDLE ===== */
+.column-resize-handle {
+  position: absolute;
+  right: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 20;
+  border-radius: 3px;
+  transition: background 150ms ease;
+}
+.column-resize-handle:hover,
+.column-resize-handle.resizing { background: rgba(74,144,217,0.4); }
+
+/* ===== HIDDEN FILE INPUT ===== */
+#import-input { display: none; }
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="loading-inner">
+    <div class="spinner"></div>
+    <p class="loading-label">Stackr</p>
+  </div>
+</div>
+<div id="banner-container"></div>
+<div id="app"></div>
+<div id="modal-container"></div>
+<input type="file" id="import-input" accept=".json">
+
+<script>
+// ===== CONFIG =====
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKp81Rl-XBjtycePFOyu67B6gtsxWpWBbfQoFHDYW1XDkwsBzRh1XCzAkiCBzwy0_U/exec';
+const STORAGE_KEY = 'stackr-data';
+const DEFAULT_COLUMNS = ["Video Ideas", "Research Complete", "To-Edit", "Done"];
+const COLORS = ['#4A90D9', '#4ad97a', '#e8c34a', '#e87c4a', '#d94a8a', '#9b59b6'];
+
+// ===== STATE =====
+let state = null;
+let openAddCardColumn = null; // column ID with open add-card form
+let openColumnMenu = null;   // column ID with open "..." menu
+let openWorkspaceDropdown = false;
+let editingModalCardId = null;
+let editingModalColumnId = null;
+let deleteConfirmInModal = false;
+let saveDebounceTimer = null;
+let dragEnterCounters = new Map(); // element -> counter
+
+function defaultState() {
+  const wsId = 'workspace-' + Date.now();
+  return {
+    version: 1,
+    activeWorkspace: wsId,
+    workspaces: {
+      [wsId]: {
+        name: 'My Board',
+        columns: DEFAULT_COLUMNS.map((title, i) => ({
+          id: 'col-' + (Date.now() + i),
+          title: title,
+          cards: []
+        }))
+      }
+    }
+  };
+}
+
+function getActiveWorkspace() {
+  return state.workspaces[state.activeWorkspace] || null;
+}
+
+function generateId(prefix) {
+  return prefix + '-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+}
+
+function slugify(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'workspace-' + Date.now();
+}
+
+// ===== COMMIT (save + render) =====
+function commit() {
+  saveToLocalStorage();
+  debouncedSaveToSheets();
+
+  // Skip re-render if user is editing a column title
+  const active = document.activeElement;
+  if (active && active.classList.contains('column-title') && active.getAttribute('contenteditable') === 'true') {
+    return;
+  }
+
+  render();
+}
+
+// ===== RENDERING =====
+const app = document.getElementById('app');
+const modalContainer = document.getElementById('modal-container');
+const bannerContainer = document.getElementById('banner-container');
+
+function render() {
+  const ws = getActiveWorkspace();
+  if (!ws) {
+    app.innerHTML = '<div class="empty-board"><p>No workspace selected.</p></div>';
+    return;
+  }
+
+  let html = '';
+
+  // Header
+  html += '<div class="header">';
+  html += '<span class="header-title">Stackr</span>';
+
+  // Workspace switcher
+  html += '<div class="workspace-switcher">';
+  html += `<button class="workspace-btn" data-action="toggle-ws-dropdown">${escapeHtml(ws.name)} <span class="arrow">&#9662;</span></button>`;
+
+  html += `<div class="workspace-dropdown${openWorkspaceDropdown ? ' open' : ''}">`;
+  for (const [id, w] of Object.entries(state.workspaces)) {
+    const isActive = id === state.activeWorkspace;
+    html += `<div class="ws-item${isActive ? ' active' : ''}" data-action="switch-workspace" data-ws-id="${id}">`;
+    html += `<span class="ws-item-name">${escapeHtml(w.name)}</span>`;
+    html += '<span class="ws-item-actions">';
+    html += `<button class="ws-action-btn" data-action="rename-workspace" data-ws-id="${id}" title="Rename">&#9998;</button>`;
+    html += `<button class="ws-action-btn delete" data-action="delete-workspace" data-ws-id="${id}" title="Delete">&#10005;</button>`;
+    html += '</span></div>';
+  }
+  html += '<div class="ws-divider"></div>';
+  html += '<div class="ws-add" data-action="add-workspace">+ New workspace</div>';
+  html += '</div></div>';
+
+  // Export / Import buttons
+  html += '<div class="header-actions">';
+  html += '<button class="header-btn" data-action="add-column">+ Add column</button>';
+  html += '<button class="header-btn" data-action="export-data">Export</button>';
+  html += '<button class="header-btn" data-action="import-data">Import</button>';
+  html += '</div>';
+
+  html += '</div>'; // header
+
+  // Board
+  if (ws.columns.length === 0) {
+    html += '<div class="empty-board"><p>No columns. Click "+ Add column" to get started.</p>';
+    html += '<button data-action="add-column">+ Add column</button></div>';
+  } else {
+    html += '<div class="board">';
+    for (const col of ws.columns) {
+      html += renderColumn(col);
+    }
+    html += '</div>';
+  }
+
+  const oldBoard = app.querySelector('.board');
+  const savedScrollLeft = oldBoard ? oldBoard.scrollLeft : 0;
+  const savedColumnScrolls = {};
+  app.querySelectorAll('.card-list[data-col-id]').forEach(el => {
+    if (el.scrollTop > 0) savedColumnScrolls[el.dataset.colId] = el.scrollTop;
+  });
+
+  app.innerHTML = html;
+
+  const newBoard = app.querySelector('.board');
+  if (newBoard && savedScrollLeft) newBoard.scrollLeft = savedScrollLeft;
+  app.querySelectorAll('.card-list[data-col-id]').forEach(el => {
+    const saved = savedColumnScrolls[el.dataset.colId];
+    if (saved) el.scrollTop = saved;
+  });
+
+}
+
+function renderColumn(col) {
+  const cardCount = col.cards.length;
+  const showMenu = openColumnMenu === col.id;
+  const widthStyle = col.width ? ` style="flex: 0 0 ${col.width}px; width: ${col.width}px;"` : '';
+
+  let html = `<div class="column" draggable="true" data-col-id="${col.id}" data-type="column"${widthStyle}>`;
+  html += `<div class="column-resize-handle" data-action="resize-col-handle" data-col-id="${col.id}"></div>`;
+
+  // Header
+  html += '<div class="column-header">';
+  html += `<span class="column-title" title="${escapeHtml(col.title)}" data-action="column-title-dblclick" data-col-id="${col.id}">${escapeHtml(col.title)}</span>`;
+  html += `<span class="card-count">${cardCount}</span>`;
+  html += `<button class="column-menu-btn" data-action="toggle-column-menu" data-col-id="${col.id}">&#8230;</button>`;
+
+  // Column menu dropdown
+  html += `<div class="column-menu${showMenu ? ' open' : ''}">`;
+  html += `<div class="column-menu-item" data-action="rename-column" data-col-id="${col.id}">Rename</div>`;
+  html += `<div class="column-menu-item delete" data-action="delete-column" data-col-id="${col.id}">Delete column</div>`;
+  html += '</div>';
+
+  html += '</div>'; // column-header
+
+  // Card list
+  if (cardCount === 0) {
+    html += `<div class="card-list empty-drop-zone" data-col-id="${col.id}" data-type="card-list">`;
+    html += '<span class="empty-text">No cards yet</span>';
+    html += '</div>';
+  } else {
+    html += `<div class="card-list" data-col-id="${col.id}" data-type="card-list">`;
+    for (const card of col.cards) {
+      html += renderCard(card, col.id);
+    }
+    html += '</div>';
+  }
+
+  html += `<div class="add-card-btn" data-action="open-add-card" data-col-id="${col.id}">+ Add card</div>`;
+
+  html += '</div>'; // column
+  return html;
+}
+
+function renderCard(card, colId) {
+  const safeColor = sanitizeColor(card.color);
+  const hasColor = safeColor !== '';
+  const cardStyle = hasColor ? ` style="background-color:${hexToRgba(safeColor,0.1)};border-color:${hexToRgba(safeColor,0.4)};"` : '';
+  const displayTitle = card.title.includes(':') ? card.title.split(':')[0].trim() : card.title;
+  let html = `<div class="card" draggable="true" data-card-id="${card.id}" data-col-id="${colId}" data-type="card" data-action="open-card-modal"${cardStyle}>`;
+  html += `<div class="card-title">${escapeHtml(displayTitle)}</div>`;
+  if (card.description) {
+    html += `<div class="card-desc">${escapeHtml(card.description)}</div>`;
+  }
+  html += `<button class="card-delete-btn" data-action="delete-card-inline" data-card-id="${card.id}" data-col-id="${colId}">&#10005;</button>`;
+  html += '</div>';
+  return html;
+}
+
+function renderModal() {
+  if (!editingModalCardId) {
+    modalContainer.innerHTML = '';
+    return;
+  }
+
+  const ws = getActiveWorkspace();
+  let card = null;
+  for (const col of ws.columns) {
+    card = col.cards.find(c => c.id === editingModalCardId);
+    if (card) break;
+  }
+  if (!card) {
+    closeModal();
+    return;
+  }
+
+  let html = '<div class="modal-overlay open" data-action="modal-overlay-click">';
+  html += '<div class="modal" data-action="modal-inner-click">';
+  html += `<div class="modal-title" contenteditable="true" data-field="title">${escapeHtml(card.title)}</div>`;
+  html += '<div class="modal-label">Description</div>';
+  html += `<div class="modal-desc" contenteditable="true" data-field="desc">${escapeHtml(card.description)}</div>`;
+  html += '<div class="modal-label">Notes / Title Options</div>';
+  html += `<div class="modal-desc" contenteditable="true" data-field="notes" style="min-height:80px;">${escapeHtml(card.notes || '')}</div>`;
+  html += '<div class="modal-label">Color</div>';
+  html += '<div class="color-picker">';
+  const modalSafeColor = sanitizeColor(card.color);
+  html += `<div class="color-swatch no-color${!modalSafeColor ? ' selected' : ''}" data-action="set-card-color" data-color=""></div>`;
+  for (const c of COLORS) {
+    html += `<div class="color-swatch${modalSafeColor === c ? ' selected' : ''}" style="background:${c}" data-action="set-card-color" data-color="${c}"></div>`;
+  }
+  html += '</div>';
+
+  html += '<div class="modal-actions">';
+  if (deleteConfirmInModal) {
+    html += '<span style="font-size:12px;color:#dc3545;">Delete this card?</span>';
+    html += '<div style="display:flex;gap:8px;">';
+    html += '<button class="btn-delete-confirm" data-action="confirm-delete-card-modal">Yes, delete</button>';
+    html += '<button class="btn-close-modal" data-action="cancel-delete-card-modal">Cancel</button>';
+    html += '</div>';
+  } else {
+    html += '<button class="btn-delete-card" data-action="delete-card-modal">Delete card</button>';
+    html += '<div style="display:flex;gap:8px;">';
+    html += '<button class="btn-close-modal" data-action="discard-close-modal">Nvm</button>';
+    html += '<button class="btn-add" data-action="save-close-modal">Save</button>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  html += '</div></div>';
+  modalContainer.innerHTML = html;
+
+  // Set up paste interception for modal contenteditable fields
+  modalContainer.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    el.addEventListener('paste', handlePaste);
+  });
+}
+
+function closeModal() {
+  if (editingModalCardId) saveModalFields();
+  editingModalCardId = null;
+  editingModalColumnId = null;
+  deleteConfirmInModal = false;
+  modalContainer.innerHTML = '';
+}
+
+function discardModal() {
+  // Close without saving text field changes (color changes are already committed)
+  editingModalCardId = null;
+  editingModalColumnId = null;
+  deleteConfirmInModal = false;
+  modalContainer.innerHTML = '';
+}
+
+function saveModalFields() {
+  const titleEl = modalContainer.querySelector('[data-field="title"]');
+  const descEl = modalContainer.querySelector('[data-field="desc"]');
+  const notesEl = modalContainer.querySelector('[data-field="notes"]');
+  if (!titleEl || !descEl) return;
+
+  const ws = getActiveWorkspace();
+  for (const col of ws.columns) {
+    const card = col.cards.find(c => c.id === editingModalCardId);
+    if (card) {
+      const newTitle = titleEl.textContent.trim();
+      const newDesc = descEl.textContent.trim();
+      if (newTitle) card.title = newTitle;
+      card.description = newDesc;
+      if (notesEl) card.notes = notesEl.textContent.trim();
+      break;
+    }
+  }
+  commit();
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function isValidColor(color) {
+  if (!color) return false;
+  return /^#[0-9a-fA-F]{3,8}$/.test(color);
+}
+
+function sanitizeColor(color) {
+  return isValidColor(color) ? color : '';
+}
+
+function hexToRgba(hex, alpha) {
+  let h = hex.slice(1);
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+}
+
+// ===== WORKSPACE MANAGEMENT =====
+function switchWorkspace(wsId) {
+  if (state.workspaces[wsId]) {
+    state.activeWorkspace = wsId;
+    openWorkspaceDropdown = false;
+    openColumnMenu = null;
+    openAddCardColumn = null;
+    commit();
+  }
+}
+
+function addWorkspace() {
+  const name = prompt('New workspace name:');
+  if (!name || !name.trim()) return;
+
+  let wsId = slugify(name.trim());
+  if (state.workspaces[wsId]) {
+    wsId = wsId + '-' + Date.now();
+  }
+
+  state.workspaces[wsId] = {
+    name: name.trim(),
+    columns: DEFAULT_COLUMNS.map((title, i) => ({
+      id: 'col-' + (Date.now() + i),
+      title: title,
+      cards: []
+    }))
+  };
+  state.activeWorkspace = wsId;
+  openWorkspaceDropdown = false;
+  commit();
+}
+
+function renameWorkspace(wsId) {
+  const ws = state.workspaces[wsId];
+  if (!ws) return;
+  const name = prompt('Rename workspace:', ws.name);
+  if (!name || !name.trim()) return;
+  ws.name = name.trim();
+  openWorkspaceDropdown = false;
+  commit();
+}
+
+function deleteWorkspace(wsId) {
+  const keys = Object.keys(state.workspaces);
+  if (keys.length <= 1) {
+    alert('Cannot delete the last workspace.');
+    return;
+  }
+  const ws = state.workspaces[wsId];
+  const hasData = ws.columns.some(c => c.cards.length > 0);
+  if (hasData && !confirm(`"${ws.name}" has cards. Delete this workspace and all its data?`)) {
+    return;
+  }
+  delete state.workspaces[wsId];
+  if (state.activeWorkspace === wsId) {
+    state.activeWorkspace = Object.keys(state.workspaces)[0];
+  }
+  openWorkspaceDropdown = false;
+  commit();
+}
+
+// ===== DRAG AND DROP =====
+let dragType = null;   // 'card' or 'column'
+let dragCardId = null;
+let dragSourceColId = null;
+let dragColumnId = null;
+
+// ===== COLUMN RESIZE STATE =====
+let resizingColId = null;
+let resizeStartX = 0;
+let resizeStartWidth = 0;
+
+function setupDragListeners() {
+  app.addEventListener('dragstart', (e) => {
+    if (e.target.closest('[data-action="resize-col-handle"]')) { e.preventDefault(); return; }
+    const cardEl = e.target.closest('[data-type="card"]');
+    const colEl = e.target.closest('[data-type="column"]');
+
+    if (cardEl && e.target === cardEl) {
+      dragType = 'card';
+      dragCardId = cardEl.dataset.cardId;
+      dragSourceColId = cardEl.dataset.colId;
+      e.dataTransfer.setData('application/card-id', dragCardId);
+      e.dataTransfer.setData('application/source-col-id', dragSourceColId);
+      e.dataTransfer.effectAllowed = 'move';
+      requestAnimationFrame(() => cardEl.classList.add('dragging'));
+    } else if (colEl && e.target.closest('.column-header')) {
+      dragType = 'column';
+      dragColumnId = colEl.dataset.colId;
+      e.dataTransfer.setData('application/column-id', dragColumnId);
+      e.dataTransfer.effectAllowed = 'move';
+      requestAnimationFrame(() => colEl.classList.add('dragging'));
+    }
+  });
+
+  app.addEventListener('dragover', (e) => {
+    e.preventDefault();
+
+    if (dragType === 'card') {
+      const cardList = e.target.closest('[data-type="card-list"]');
+      if (!cardList) return;
+      e.dataTransfer.dropEffect = 'move';
+
+      // Remove old indicators
+      app.querySelectorAll('.insertion-indicator').forEach(el => el.remove());
+
+      const dropIndex = getCardDropIndex(cardList, e.clientY);
+      const cards = [...cardList.querySelectorAll('.card:not(.dragging)')];
+      const indicator = document.createElement('div');
+      indicator.className = 'insertion-indicator';
+
+      if (dropIndex < cards.length) {
+        cardList.insertBefore(indicator, cards[dropIndex]);
+      } else {
+        cardList.appendChild(indicator);
+      }
+    } else if (dragType === 'column') {
+      const colEl = e.target.closest('[data-type="column"]');
+      if (!colEl || colEl.dataset.colId === dragColumnId) return;
+      e.dataTransfer.dropEffect = 'move';
+
+      // Visual feedback
+      app.querySelectorAll('.drag-over-column').forEach(el => el.classList.remove('drag-over-column'));
+      colEl.classList.add('drag-over-column');
+    }
+  });
+
+  app.addEventListener('dragenter', (e) => {
+    const target = e.target.closest('[data-type="card-list"]') || e.target.closest('[data-type="column"]');
+    if (target) {
+      const count = (dragEnterCounters.get(target) || 0) + 1;
+      dragEnterCounters.set(target, count);
+    }
+  });
+
+  app.addEventListener('dragleave', (e) => {
+    const target = e.target.closest('[data-type="card-list"]') || e.target.closest('[data-type="column"]');
+    if (target) {
+      const count = (dragEnterCounters.get(target) || 1) - 1;
+      dragEnterCounters.set(target, count);
+      if (count <= 0) {
+        dragEnterCounters.delete(target);
+        target.classList.remove('drag-over-column');
+      }
+    }
+  });
+
+  app.addEventListener('drop', (e) => {
+    e.preventDefault();
+
+    if (dragType === 'card') {
+      const cardList = e.target.closest('[data-type="card-list"]');
+      if (!cardList) return;
+
+      const targetColId = cardList.dataset.colId;
+      const dropIndex = getCardDropIndex(cardList, e.clientY);
+
+      moveCard(dragCardId, dragSourceColId, targetColId, dropIndex);
+    } else if (dragType === 'column') {
+      const colEl = e.target.closest('[data-type="column"]');
+      if (!colEl) return;
+
+      const targetColId = colEl.dataset.colId;
+      moveColumn(dragColumnId, targetColId);
+    }
+
+    cleanupDrag();
+  });
+
+  app.addEventListener('dragend', () => {
+    cleanupDrag();
+  });
+}
+
+function cleanupDrag() {
+  app.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+  app.querySelectorAll('.drag-over-column').forEach(el => el.classList.remove('drag-over-column'));
+  app.querySelectorAll('.insertion-indicator').forEach(el => el.remove());
+  dragEnterCounters.clear();
+  dragType = null;
+  dragCardId = null;
+  dragSourceColId = null;
+  dragColumnId = null;
+}
+
+function getCardDropIndex(cardListEl, mouseY) {
+  const cards = [...cardListEl.querySelectorAll('.card:not(.dragging)')];
+  for (let i = 0; i < cards.length; i++) {
+    const rect = cards[i].getBoundingClientRect();
+    if (mouseY < rect.top + rect.height / 2) return i;
+  }
+  return cards.length;
+}
+
+function moveCard(cardId, fromColId, toColId, toIndex) {
+  const ws = getActiveWorkspace();
+  const fromCol = ws.columns.find(c => c.id === fromColId);
+  const toCol = ws.columns.find(c => c.id === toColId);
+  if (!fromCol || !toCol) return;
+
+  const cardIndex = fromCol.cards.findIndex(c => c.id === cardId);
+  if (cardIndex === -1) return;
+
+  const [card] = fromCol.cards.splice(cardIndex, 1);
+
+  // Adjust index if moving within the same column and source was before target
+  let adjustedIndex = toIndex;
+  if (fromColId === toColId && cardIndex < toIndex) {
+    adjustedIndex--;
+  }
+  adjustedIndex = Math.max(0, Math.min(adjustedIndex, toCol.cards.length));
+
+  toCol.cards.splice(adjustedIndex, 0, card);
+  commit();
+}
+
+function moveColumn(fromColId, toColId) {
+  const ws = getActiveWorkspace();
+  const fromIdx = ws.columns.findIndex(c => c.id === fromColId);
+  const toIdx = ws.columns.findIndex(c => c.id === toColId);
+  if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+
+  const [col] = ws.columns.splice(fromIdx, 1);
+  ws.columns.splice(toIdx, 0, col);
+  commit();
+}
+
+// ===== EVENT HANDLERS =====
+function setupEventListeners() {
+  // Main click delegation
+  app.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) {
+      // Close menus on click outside
+      if (openColumnMenu) { openColumnMenu = null; render(); }
+      if (openWorkspaceDropdown) { openWorkspaceDropdown = false; render(); }
+      return;
+    }
+
+    const action = btn.dataset.action;
+    const colId = btn.dataset.colId;
+    const cardId = btn.dataset.cardId;
+    const wsId = btn.dataset.wsId;
+
+    switch (action) {
+      case 'toggle-ws-dropdown':
+        e.stopPropagation();
+        openWorkspaceDropdown = !openWorkspaceDropdown;
+        render();
+        break;
+
+      case 'switch-workspace':
+        switchWorkspace(wsId);
+        break;
+
+      case 'add-workspace':
+        addWorkspace();
+        break;
+
+      case 'rename-workspace':
+        e.stopPropagation();
+        renameWorkspace(wsId);
+        break;
+
+      case 'delete-workspace':
+        e.stopPropagation();
+        deleteWorkspace(wsId);
+        break;
+
+      case 'add-column':
+        addColumn();
+        break;
+
+      case 'toggle-column-menu':
+        e.stopPropagation();
+        openColumnMenu = openColumnMenu === colId ? null : colId;
+        render();
+        break;
+
+      case 'rename-column':
+        e.stopPropagation();
+        openColumnMenu = null;
+        render();
+        startColumnRename(colId);
+        break;
+
+      case 'delete-column':
+        e.stopPropagation();
+        openColumnMenu = null;
+        deleteColumn(colId);
+        break;
+
+      case 'open-add-card':
+        openAddCardColumn = colId;
+        renderAddCardModal();
+        break;
+
+      case 'open-card-modal':
+        if (e.target.closest('[data-action="delete-card-inline"]')) break;
+        openCardModal(cardId, colId);
+        break;
+
+      case 'delete-card-inline':
+        e.stopPropagation();
+        deleteCard(cardId, colId);
+        break;
+
+      case 'export-data':
+        exportData();
+        break;
+
+      case 'import-data':
+        document.getElementById('import-input').click();
+        break;
+
+      case 'column-title-dblclick':
+        // Handled by dblclick listener
+        break;
+    }
+  });
+
+  // Double-click for column rename
+  app.addEventListener('dblclick', (e) => {
+    const titleEl = e.target.closest('[data-action="column-title-dblclick"]');
+    if (titleEl) {
+      startColumnRename(titleEl.dataset.colId);
+    }
+  });
+
+
+  // Modal event delegation
+  modalContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    switch (action) {
+      case 'modal-overlay-click':
+        if (e.target === btn) closeModal();
+        break;
+
+      case 'add-card-overlay-click':
+        if (e.target === btn) closeAddCardModal();
+        break;
+
+      case 'submit-new-card':
+        submitNewCardFromModal();
+        break;
+
+      case 'close-add-card-modal':
+        closeAddCardModal();
+        break;
+
+      case 'modal-inner-click':
+        // Do nothing, stop propagation handled by overlay check
+        break;
+
+      case 'set-card-color':
+        setCardColor(btn.dataset.color);
+        break;
+
+      case 'delete-card-modal':
+        deleteConfirmInModal = true;
+        renderModal();
+        break;
+
+      case 'confirm-delete-card-modal':
+        deleteCardFromModal();
+        break;
+
+      case 'cancel-delete-card-modal':
+        deleteConfirmInModal = false;
+        renderModal();
+        break;
+
+      case 'save-close-modal':
+        closeModal(); // closeModal already calls saveModalFields
+        break;
+
+      case 'discard-close-modal':
+        discardModal();
+        break;
+
+      case 'close-modal':
+        closeModal();
+        break;
+    }
+  });
+
+  // Keyboard shortcuts for modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (editingModalCardId) closeModal();
+      else if (openAddCardColumn) closeAddCardModal();
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      if (editingModalCardId) closeModal();
+      else if (openAddCardColumn) submitNewCardFromModal();
+    }
+  });
+
+  // Import file handler
+  document.getElementById('import-input').addEventListener('change', handleImport);
+
+  // Column title contenteditable events
+  app.addEventListener('blur', (e) => {
+    if (e.target.classList.contains('column-title') && e.target.getAttribute('contenteditable') === 'true') {
+      finishColumnRename(e.target);
+    }
+  }, true);
+
+  app.addEventListener('keydown', (e) => {
+    if (e.target.classList.contains('column-title') && e.target.getAttribute('contenteditable') === 'true') {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.target.blur();
+      } else if (e.key === 'Escape') {
+        e.target.textContent = e.target.dataset.originalTitle || '';
+        e.target.removeAttribute('contenteditable');
+        e.target.blur();
+      }
+    }
+  });
+
+  // Paste interception for column titles
+  app.addEventListener('paste', (e) => {
+    if (e.target.classList.contains('column-title') && e.target.getAttribute('contenteditable') === 'true') {
+      handlePaste(e);
+    }
+  });
+
+  // Close menus on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.workspace-switcher') && openWorkspaceDropdown) {
+      openWorkspaceDropdown = false;
+      render();
+    }
+    if (!e.target.closest('.column-menu') && !e.target.closest('.column-menu-btn') && openColumnMenu) {
+      openColumnMenu = null;
+      render();
+    }
+  });
+}
+
+function handlePaste(e) {
+  e.preventDefault();
+  const text = e.clipboardData.getData('text/plain');
+  document.execCommand('insertText', false, text);
+}
+
+function addColumn() {
+  const ws = getActiveWorkspace();
+  const colId = generateId('col');
+  ws.columns.push({ id: colId, title: 'New Column', cards: [] });
+  commit();
+  // Start rename on the new column after render
+  requestAnimationFrame(() => startColumnRename(colId));
+}
+
+function startColumnRename(colId) {
+  const titleEl = app.querySelector(`[data-action="column-title-dblclick"][data-col-id="${colId}"]`);
+  if (!titleEl) return;
+  titleEl.setAttribute('contenteditable', 'true');
+  titleEl.dataset.originalTitle = titleEl.textContent;
+  titleEl.focus();
+  // Select all text
+  const range = document.createRange();
+  range.selectNodeContents(titleEl);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function finishColumnRename(el) {
+  const colId = el.dataset.colId;
+  const newTitle = el.textContent.trim();
+  el.removeAttribute('contenteditable');
+
+  const ws = getActiveWorkspace();
+  const col = ws.columns.find(c => c.id === colId);
+  if (col && newTitle) {
+    col.title = newTitle;
+    commit();
+  } else {
+    render();
+  }
+}
+
+function deleteColumn(colId) {
+  const ws = getActiveWorkspace();
+  const col = ws.columns.find(c => c.id === colId);
+  if (!col) return;
+
+  if (col.cards.length > 0) {
+    if (!confirm(`This column has ${col.cards.length} card${col.cards.length > 1 ? 's' : ''}. Delete column and all its cards?`)) {
+      return;
+    }
+  }
+
+  ws.columns = ws.columns.filter(c => c.id !== colId);
+  commit();
+}
+
+function submitCard(colId) {
+  const titleInput = app.querySelector(`.add-card-title-input[data-col-id="${colId}"]`);
+  const descInput = app.querySelector(`.add-card-desc-input[data-col-id="${colId}"]`);
+  if (!titleInput) return;
+
+  const title = titleInput.value.trim();
+  if (!title) {
+    titleInput.focus();
+    return;
+  }
+
+  const ws = getActiveWorkspace();
+  const col = ws.columns.find(c => c.id === colId);
+  if (!col) return;
+
+  col.cards.push({
+    id: generateId('card'),
+    title: title,
+    description: descInput ? descInput.value.trim() : '',
+    color: '',
+    notes: ''
+  });
+
+  openAddCardColumn = null;
+  commit();
+}
+
+function renderAddCardModal() {
+  if (!openAddCardColumn) { modalContainer.innerHTML = ''; return; }
+  const ws = getActiveWorkspace();
+  const col = ws ? ws.columns.find(c => c.id === openAddCardColumn) : null;
+  const colTitle = col ? escapeHtml(col.title) : 'column';
+
+  let html = '<div class="modal-overlay open" data-action="add-card-overlay-click">';
+  html += '<div class="modal" style="width:480px;" data-action="modal-inner-click">';
+  html += `<div style="font-size:16px;font-weight:600;margin-bottom:4px;">New card</div>`;
+  html += `<div style="font-size:12px;color:#888;margin-bottom:16px;">Adding to <strong>${colTitle}</strong></div>`;
+
+  html += '<div class="modal-label">Title</div>';
+  html += '<input type="text" id="new-card-title-input" placeholder="Company or topic name" style="width:100%;padding:8px 10px;border:1px solid #e2e5e9;border-radius:5px;font-size:13px;font-family:inherit;outline:none;transition:border-color 150ms ease;" autocomplete="off">';
+
+  html += '<div class="modal-label">Description</div>';
+  html += '<div class="modal-desc" contenteditable="true" id="new-card-desc-input" data-placeholder="Brief summary (optional)" style="min-height:60px;"></div>';
+
+  html += '<div class="modal-label">Notes / Title Options</div>';
+  html += '<div class="modal-desc" contenteditable="true" id="new-card-notes-input" data-placeholder="Title options list, research notes... (optional)" style="min-height:80px;"></div>';
+
+  html += '<div class="modal-actions">';
+  html += '<div></div>';
+  html += '<div style="display:flex;gap:8px;">';
+  html += `<button class="btn-cancel" data-action="close-add-card-modal">Cancel</button>`;
+  html += `<button class="btn-add" data-action="submit-new-card">Add card</button>`;
+  html += '</div></div>';
+  html += '</div></div>';
+  modalContainer.innerHTML = html;
+
+  // Paste interception + Cmd/Ctrl+Enter to submit from any field
+  modalContainer.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    el.addEventListener('paste', handlePaste);
+    el.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); submitNewCardFromModal(); }
+    });
+  });
+  const titleInput = document.getElementById('new-card-title-input');
+  if (titleInput) {
+    titleInput.focus();
+    titleInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); submitNewCardFromModal(); }
+      if (e.key === 'Escape') closeAddCardModal();
+    });
+    titleInput.addEventListener('input', () => {
+      titleInput.style.borderColor = titleInput.value.trim() ? '#4A90D9' : '#e2e5e9';
+    });
+  }
+}
+
+function closeAddCardModal() {
+  openAddCardColumn = null;
+  modalContainer.innerHTML = '';
+}
+
+function submitNewCardFromModal() {
+  const titleInput = document.getElementById('new-card-title-input');
+  const descInput = document.getElementById('new-card-desc-input');
+  const notesInput = document.getElementById('new-card-notes-input');
+  if (!titleInput) return;
+
+  const title = titleInput.value.trim();
+  if (!title) { titleInput.focus(); titleInput.style.borderColor = '#dc3545'; return; }
+
+  const ws = getActiveWorkspace();
+  const col = ws ? ws.columns.find(c => c.id === openAddCardColumn) : null;
+  if (!col) { closeAddCardModal(); return; }
+
+  col.cards.push({
+    id: generateId('card'),
+    title: title,
+    description: descInput ? descInput.textContent.trim() : '',
+    notes: notesInput ? notesInput.textContent.trim() : '',
+    color: ''
+  });
+
+  closeAddCardModal();
+  commit();
+}
+
+function openCardModal(cardId, colId) {
+  openAddCardColumn = null;
+  editingModalCardId = cardId;
+  editingModalColumnId = colId;
+  deleteConfirmInModal = false;
+  renderModal();
+}
+
+function setCardColor(color) {
+  saveModalFields();
+  const ws = getActiveWorkspace();
+  const safeColor = color === '' ? '' : sanitizeColor(color);
+  if (color !== '' && safeColor === '') return; // invalid color, ignore
+  for (const col of ws.columns) {
+    const card = col.cards.find(c => c.id === editingModalCardId);
+    if (card) {
+      card.color = (safeColor !== '' && card.color === safeColor) ? '' : safeColor;
+      commit();
+      renderModal();
+      break;
+    }
+  }
+}
+
+function deleteCard(cardId, colId) {
+  const ws = getActiveWorkspace();
+  const col = ws.columns.find(c => c.id === colId);
+  if (!col) return;
+  col.cards = col.cards.filter(c => c.id !== cardId);
+  commit();
+}
+
+function deleteCardFromModal() {
+  if (!editingModalCardId) return;
+  const ws = getActiveWorkspace();
+  for (const col of ws.columns) {
+    const idx = col.cards.findIndex(c => c.id === editingModalCardId);
+    if (idx !== -1) {
+      col.cards.splice(idx, 1);
+      break;
+    }
+  }
+  editingModalCardId = null;
+  editingModalColumnId = null;
+  deleteConfirmInModal = false;
+  modalContainer.innerHTML = '';
+  commit();
+}
+
+// ===== PERSISTENCE (Google Sheets + localStorage cache + export/import) =====
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    // Silent fail -- Sheets is source of truth
+  }
+}
+
+function loadFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return sanitizeStateColors(JSON.parse(raw));
+  } catch (e) {
+    // Parse error, fall through
+  }
+  return null;
+}
+
+function sanitizeStateColors(data) {
+  if (!data || !data.workspaces) return data;
+  for (const ws of Object.values(data.workspaces)) {
+    if (!ws.columns) continue;
+    for (const col of ws.columns) {
+      if (!col.cards) continue;
+      for (const card of col.cards) {
+        if (card.color) card.color = sanitizeColor(card.color);
+      }
+    }
+  }
+  return data;
+}
+
+async function loadFromSheets() {
+  try {
+    const res = await fetch(SCRIPT_URL);
+    if (!res.ok) throw new Error('Network response not ok');
+    const data = await res.json();
+    if (data && data.version && data.workspaces) {
+      return sanitizeStateColors(data);
+    }
+  } catch (e) {
+    // Network error, fall through
+  }
+  return null;
+}
+
+async function saveToSheets() {
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(state),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    hideBanner();
+  } catch (e) {
+    showBanner('Changes could not be saved. Check your internet connection.', 'error');
+  }
+}
+
+function debouncedSaveToSheets() {
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(() => saveToSheets(), 500);
+}
+
+function showBanner(message, type) {
+  bannerContainer.innerHTML = `<div class="banner ${type || ''}"><span>${escapeHtml(message)}</span><button class="banner-close" onclick="hideBanner()">&#10005;</button></div>`;
+}
+
+function hideBanner() {
+  bannerContainer.innerHTML = '';
+}
+
+// Two-tab detection
+window.addEventListener('storage', (e) => {
+  if (e.key === STORAGE_KEY) {
+    bannerContainer.innerHTML = '<div class="banner"><span>This board was updated in another tab.</span> <button onclick="location.reload()" style="margin-left:8px;padding:4px 10px;border:1px solid #856404;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;color:#856404;">Reload</button><button class="banner-close" onclick="hideBanner()">&#10005;</button></div>';
+  }
+});
+
+function exportData() {
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toISOString().slice(0, 10);
+  a.download = `stackr-backup-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (!data.version || !data.workspaces || typeof data.workspaces !== 'object') {
+        alert('Invalid backup file. Missing required fields (version, workspaces).');
+        return;
+      }
+      // Validate and sanitize imported data
+      for (const [wsId, ws] of Object.entries(data.workspaces)) {
+        if (!ws.name || !Array.isArray(ws.columns)) {
+          alert('Invalid backup file. Workspace "' + wsId + '" has invalid structure.');
+          return;
+        }
+        for (const col of ws.columns) {
+          if (!col.id || !col.title || !Array.isArray(col.cards)) {
+            alert('Invalid backup file. A column has invalid structure.');
+            return;
+          }
+          for (const card of col.cards) {
+            if (!card.id || !card.title) {
+              alert('Invalid backup file. A card has invalid structure.');
+              return;
+            }
+            // Sanitize color values from imported data
+            if (card.color) card.color = sanitizeColor(card.color);
+          }
+        }
+      }
+      if (!confirm('This will replace all current data with the imported file. Continue?')) {
+        return;
+      }
+      state = data;
+      // Make sure activeWorkspace points to an existing workspace
+      if (!state.workspaces[state.activeWorkspace]) {
+        state.activeWorkspace = Object.keys(state.workspaces)[0];
+      }
+      commit();
+    } catch (err) {
+      alert('Failed to parse import file. Make sure it is valid JSON.');
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so the same file can be imported again
+  e.target.value = '';
+}
+
+// ===== COLUMN RESIZE =====
+function setupResizeListeners() {
+  app.addEventListener('mousedown', (e) => {
+    const handle = e.target.closest('[data-action="resize-col-handle"]');
+    if (!handle) return;
+    e.preventDefault();
+    e.stopPropagation();
+    resizingColId = handle.dataset.colId;
+    const colEl = app.querySelector(`.column[data-col-id="${resizingColId}"]`);
+    resizeStartX = e.clientX;
+    resizeStartWidth = colEl ? colEl.getBoundingClientRect().width : 240;
+    handle.classList.add('resizing');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!resizingColId) return;
+    const newWidth = Math.max(180, resizeStartWidth + (e.clientX - resizeStartX));
+    const colEl = app.querySelector(`.column[data-col-id="${resizingColId}"]`);
+    if (colEl) { colEl.style.flex = `0 0 ${newWidth}px`; colEl.style.width = `${newWidth}px`; }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!resizingColId) return;
+    const colEl = app.querySelector(`.column[data-col-id="${resizingColId}"]`);
+    if (colEl) {
+      const finalWidth = Math.round(colEl.getBoundingClientRect().width);
+      const ws = getActiveWorkspace();
+      const col = ws ? ws.columns.find(c => c.id === resizingColId) : null;
+      if (col) { col.width = finalWidth; commit(); }
+    }
+    resizingColId = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+
+  // Double-click resize handle to reset column to auto width
+  app.addEventListener('dblclick', (e) => {
+    const handle = e.target.closest('[data-action="resize-col-handle"]');
+    if (!handle) return;
+    const ws = getActiveWorkspace();
+    const col = ws ? ws.columns.find(c => c.id === handle.dataset.colId) : null;
+    if (col) { col.width = null; commit(); }
+  });
+}
+
+// ===== INIT =====
+async function init() {
+  // Try loading from Google Sheets first
+  const sheetsData = await loadFromSheets();
+  if (sheetsData) {
+    state = sheetsData;
+  } else {
+    // Fall back to localStorage
+    const localData = loadFromLocalStorage();
+    if (localData && localData.version && localData.workspaces) {
+      state = localData;
+      showBanner('Loaded from local cache. Could not reach Google Sheets.', '');
+    } else {
+      state = defaultState();
+    }
+  }
+
+  // Write-through cache on first load
+  saveToLocalStorage();
+
+  render();
+  setupEventListeners();
+  setupDragListeners();
+  setupResizeListeners();
+
+  // Hide loading overlay
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) {
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.remove(), 350);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
