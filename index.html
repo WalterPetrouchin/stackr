@@ -840,7 +840,8 @@ function render() {
   // Export / Import buttons
   html += '<div class="header-actions">';
   html += '<button class="header-btn" data-action="add-column">+ Add column</button>';
-  html += '<button class="header-btn" data-action="export-data">Export</button>';
+  html += '<button class="header-btn" data-action="export-data">Export JSON</button>';
+  html += '<button class="header-btn" data-action="export-md">Export MD</button>';
   html += '<button class="header-btn" data-action="import-data">Import</button>';
   html += '</div>';
 
@@ -1364,6 +1365,10 @@ function setupEventListeners() {
         exportData();
         break;
 
+      case 'export-md':
+        exportMarkdown();
+        break;
+
       case 'import-data':
         document.getElementById('import-input').click();
         break;
@@ -1800,6 +1805,39 @@ function exportData() {
   a.href = url;
   const date = new Date().toISOString().slice(0, 10);
   a.download = `stackr-backup-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportMarkdown() {
+  const ws = getActiveWorkspace();
+  if (!ws) return;
+
+  const date = new Date().toISOString().slice(0, 10);
+  let md = `# ${ws.name}\n\n`;
+
+  for (const col of ws.columns) {
+    md += `---\n\n## ${col.title}\n`;
+    if (col.cards.length === 0) {
+      md += '\n*(empty)*\n';
+    } else {
+      for (const card of col.cards) {
+        const company = card.title.includes(':') ? card.title.split(':')[0].trim() : card.title;
+        md += `\n---\n\n### ${company}\n`;
+        if (card.description) md += `${card.description}\n`;
+        if (card.notes) md += `\n${card.notes}\n`;
+      }
+    }
+    md += '\n';
+  }
+
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${ws.name.toLowerCase().replace(/\s+/g, '-')}-${date}.md`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
