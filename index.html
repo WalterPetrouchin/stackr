@@ -954,9 +954,9 @@ function renderModal() {
   html += '<div class="modal" data-action="modal-inner-click">';
   html += `<div class="modal-title" contenteditable="true" data-field="title">${escapeHtml(card.title)}</div>`;
   html += '<div class="modal-label">Description</div>';
-  html += `<div class="modal-desc" contenteditable="true" data-field="desc">${escapeHtml(card.description)}</div>`;
+  html += `<div class="modal-desc" contenteditable="true" data-field="desc">${textToHtml(card.description)}</div>`;
   html += '<div class="modal-label">Notes / Title Options</div>';
-  html += `<div class="modal-desc" contenteditable="true" data-field="notes" style="min-height:80px;">${escapeHtml(card.notes || '')}</div>`;
+  html += `<div class="modal-desc" contenteditable="true" data-field="notes" style="min-height:80px;">${textToHtml(card.notes || '')}</div>`;
   html += '<div class="modal-label">Color</div>';
   html += '<div class="color-picker">';
   const modalSafeColor = sanitizeColor(card.color);
@@ -1018,14 +1018,42 @@ function saveModalFields() {
     const card = col.cards.find(c => c.id === editingModalCardId);
     if (card) {
       const newTitle = titleEl.textContent.trim();
-      const newDesc = descEl.textContent.trim();
       if (newTitle) card.title = newTitle;
-      card.description = newDesc;
-      if (notesEl) card.notes = notesEl.textContent.trim();
+      card.description = getEditableText(descEl);
+      if (notesEl) card.notes = getEditableText(notesEl);
       break;
     }
   }
   commit();
+}
+
+// Convert stored text (with \n) to HTML safe for contenteditable innerHTML
+function textToHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML.replace(/\n/g, '<br>');
+}
+
+// Extract plain text with newlines preserved from a contenteditable element
+function getEditableText(el) {
+  function walk(node) {
+    let text = '';
+    for (const child of node.childNodes) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        text += child.textContent;
+      } else if (child.nodeName === 'BR') {
+        text += '\n';
+      } else if (child.nodeName === 'DIV' || child.nodeName === 'P') {
+        const inner = walk(child);
+        text += (text && !text.endsWith('\n') ? '\n' : '') + inner;
+      } else {
+        text += walk(child);
+      }
+    }
+    return text;
+  }
+  return walk(el).replace(/^\n+/, '').trimEnd();
 }
 
 function escapeHtml(str) {
@@ -1659,8 +1687,8 @@ function submitNewCardFromModal() {
   col.cards.push({
     id: generateId('card'),
     title: title,
-    description: descInput ? descInput.textContent.trim() : '',
-    notes: notesInput ? notesInput.textContent.trim() : '',
+    description: descInput ? getEditableText(descInput) : '',
+    notes: notesInput ? getEditableText(notesInput) : '',
     color: ''
   });
 
@@ -1686,7 +1714,10 @@ function setCardColor(color) {
     if (card) {
       card.color = (safeColor !== '' && card.color === safeColor) ? '' : safeColor;
       commit();
-      renderModal();
+      // Update swatches in-place — no modal rebuild, no scroll reset
+      modalContainer.querySelectorAll('[data-action="set-card-color"]').forEach(swatch => {
+        swatch.classList.toggle('selected', swatch.dataset.color === card.color);
+      });
       break;
     }
   }
