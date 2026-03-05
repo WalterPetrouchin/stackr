@@ -1,0 +1,2 @@
+# stackr
+Workflow/Projects management
