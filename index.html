@@ -1168,7 +1168,7 @@ function setupDragListeners() {
       e.dataTransfer.setData('application/source-col-id', dragSourceColId);
       e.dataTransfer.effectAllowed = 'move';
       requestAnimationFrame(() => cardEl.classList.add('dragging'));
-    } else if (colEl && e.target.closest('.column-header')) {
+    } else if (colEl) {
       dragType = 'column';
       dragColumnId = colEl.dataset.colId;
       e.dataTransfer.setData('application/column-id', dragColumnId);
