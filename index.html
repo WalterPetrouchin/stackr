@@ -789,6 +789,7 @@ function slugify(str) {
 
 // ===== COMMIT (save + render) =====
 function commit() {
+  state.lastModified = Date.now();
   saveToLocalStorage();
   debouncedSaveToSheets();
 
@@ -1975,19 +1976,27 @@ function setupResizeListeners() {
 
 // ===== INIT =====
 async function init() {
-  // Try loading from Google Sheets first
-  const sheetsData = await loadFromSheets();
-  if (sheetsData) {
+  // Load both sources in parallel
+  const [sheetsData, localData] = await Promise.all([
+    loadFromSheets(),
+    Promise.resolve(loadFromLocalStorage())
+  ]);
+
+  const sheetsValid = sheetsData && sheetsData.version && sheetsData.workspaces;
+  const localValid  = localData  && localData.version  && localData.workspaces;
+
+  if (sheetsValid && localValid) {
+    // Both exist — use whichever was saved more recently
+    const sheetsTime = sheetsData.lastModified || 0;
+    const localTime  = localData.lastModified  || 0;
+    state = localTime > sheetsTime ? localData : sheetsData;
+  } else if (localValid) {
+    state = localData;
+    showBanner('Loaded from local cache. Could not reach Google Sheets.', '');
+  } else if (sheetsValid) {
     state = sheetsData;
   } else {
-    // Fall back to localStorage
-    const localData = loadFromLocalStorage();
-    if (localData && localData.version && localData.workspaces) {
-      state = localData;
-      showBanner('Loaded from local cache. Could not reach Google Sheets.', '');
-    } else {
-      state = defaultState();
-    }
+    state = defaultState();
   }
 
   // Write-through cache on first load
